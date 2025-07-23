@@ -1,0 +1,76 @@
+# Default values for s3www-app
+replicaCount: 2
+
+image:
+  repository: y4m4/s3www
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: LoadBalancer  # Changed from ClusterIP for direct ALB provisioning
+  port: 80
+
+ingress:
+  enabled: false  # Disabled by default - using LoadBalancer service
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  hosts:
+    - host: s3www.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false  # Disabled by default
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Application specific configuration
+config:
+  # S3 bucket configuration
+  bucketName: "s3www-storage"
+  region: "us-east-1"
+  
+  # MinIO configuration
+  minioEndpoint: "http://minio:9000"
+  minioAccessKey: "minioadmin"
+  minioSecretKey: "minioadmin123"
+  
+  # Application settings
+  port: 8080
+  debug: false 

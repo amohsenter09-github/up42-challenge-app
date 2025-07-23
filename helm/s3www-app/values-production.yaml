@@ -1,0 +1,95 @@
+# Production values for s3www-app
+replicaCount: 3
+
+image:
+  repository: y4m4/s3www
+  tag: "v1.0.0"
+  pullPolicy: Always
+
+serviceAccount:
+  create: true
+  annotations: {}
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: LoadBalancer  # For production ALB provisioning
+  port: 80
+
+ingress:
+  enabled: false  # Using LoadBalancer service instead
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  hosts:
+    - host: s3www.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 70
+
+nodeSelector:
+  node-role.kubernetes.io/worker: "true"
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - s3www-app
+        topologyKey: kubernetes.io/hostname
+
+# Application specific configuration
+config:
+  # S3 bucket configuration - UPDATE THESE FOR PRODUCTION
+  bucketName: "s3www-production-storage"
+  region: "us-east-1"
+  
+  # MinIO configuration - UPDATE THESE FOR PRODUCTION
+  minioEndpoint: "http://minio:9000"
+  minioAccessKey: "minioadmin"
+  minioSecretKey: "minioadmin123"
+  
+  # Application settings
+  port: 8080
+  debug: false 

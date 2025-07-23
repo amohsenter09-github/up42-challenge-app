@@ -1,0 +1,32 @@
+# Custom values for s3www-app - UPDATED FOR CURRENT DEPLOYMENT
+config:
+  # S3 bucket name (MinIO bucket)
+  bucketName: "s3www-storage"
+  region: "us-east-1"
+  
+  # MinIO configuration (from our deployment)
+  minioEndpoint: "http://minio:9000"
+  minioAccessKey: "minioadmin"
+  minioSecretKey: "minioadmin123"
+  
+  # Application settings
+  port: 8080
+  debug: false
+
+# Service configuration for external access
+service:
+  type: LoadBalancer  # Direct ALB provisioning
+
+# Ingress configuration for external access
+ingress:
+  enabled: false  # Using LoadBalancer service instead
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+  hosts:
+    - host: s3www.up42-challenge.local  # Will be replaced by ALB DNS
+      paths:
+        - path: /
+          pathType: Prefix 

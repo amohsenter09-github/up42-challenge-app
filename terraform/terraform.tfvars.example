@@ -1,0 +1,12 @@
+# Minimal terraform.tfvars file for UP42 Challenge AWS Infrastructure
+# Copy this file to terraform.tfvars and modify the values as needed
+
+# AWS Configuration
+aws_region = "eu-west-1"  # Ireland region
+
+# EKS Cluster Configuration
+cluster_name    = "up42-challenge"
+cluster_version = "1.28"
+
+# VPC Configuration
+vpc_cidr = "10.0.0.0/16" 

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3www-app-deployment
+  labels:
+    app: s3www-app
+    chart: s3www-app-0.1.0
+    release: s3www-app
+    heritage: Helm
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: s3www-app
+      release: s3www-app
+  template:
+    metadata:
+      labels:
+        app: s3www-app
+        release: s3www-app
+    spec:
+      serviceAccountName: s3www-app-serviceaccount
+      containers:
+        - name: s3www-app
+          image: "y4m4/s3www:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: S3WWW_BUCKET
+              value: {{ .Values.config.bucketName | quote }}
+            - name: S3WWW_ENDPOINT
+              value: {{ .Values.config.minioEndpoint | quote }}
+            - name: S3WWW_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3www-app-minio-secret
+                  key: access-key
+            - name: S3WWW_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: s3www-app-minio-secret
+                  key: secret-key
+            - name: PORT
+              value: "8080"
+            - name: S3WWW_ADDRESS
+              value: "0.0.0.0:8080"
+            - name: DEBUG
+              value: "false"
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi 
