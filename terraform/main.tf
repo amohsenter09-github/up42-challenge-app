@@ -55,15 +55,20 @@ module "eks" {
       instance_types = ["t3.medium"]  # Upgraded for better pod capacity
       capacity_type  = "ON_DEMAND"
 
-      min_size     = 0  # Scaled down to save costs
+      min_size     = 1  # Scaled down to save costs
       max_size     = 1  # Keep at 1 to satisfy EKS requirements
-      desired_size = 0  # Scale down to 0 instances
+      desired_size = 1  # Scale down to 0 instances
 
       disk_size = 20
 
       labels = {
         Environment = "production"
         NodeGroup   = "general"
+      }
+
+      # Add EBS CSI driver permissions
+      iam_role_additional_policies = {
+        AmazonEBSCSIDriverPolicy = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
       }
     }
   }

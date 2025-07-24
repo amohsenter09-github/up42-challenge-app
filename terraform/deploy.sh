@@ -103,19 +103,74 @@ deploy_infrastructure() {
     # Initialize Terraform
     terraform init
     
-    # Plan deployment
+    # Plan deployment (infrastructure only, exclude kubernetes_apps)
     print_status "Planning infrastructure deployment..."
-    terraform plan -var-file="environments/$environment.tfvars" -out=tfplan
+    terraform plan -var-file="environments/$environment.tfvars" -target=module.vpc -target=module.eks -out=tfplan
     
     # Apply deployment
     print_status "Applying infrastructure deployment..."
     terraform apply tfplan
     
+    # Wait for EKS cluster to be ready
+    print_status "Waiting for EKS cluster to be ready..."
+    sleep 30  # Give EKS time to fully initialize
+    
     # Configure kubectl
     print_status "Configuring kubectl..."
     aws eks update-kubeconfig --region $(terraform output -raw aws_region) --name $(terraform output -raw cluster_name)
     
+    # Scale up node group if needed
+    print_status "Checking node group status..."
+    scale_up_node_group_if_needed
+    
+    # Wait for nodes to be ready
+    print_status "Waiting for nodes to be ready..."
+    kubectl wait --for=condition=ready nodes --all --timeout=300s || print_warning "No nodes ready yet (scaled down)"
+    
     print_success "Infrastructure deployed successfully"
+}
+
+# Function to scale up node group if needed
+scale_up_node_group_if_needed() {
+    print_status "Checking if node group needs scaling..."
+    
+    # Get cluster name
+    local cluster_name=$(terraform output -raw cluster_name 2>/dev/null || echo "up42-challenge")
+    
+    # Get node group name
+    local nodegroup_name=$(aws eks list-nodegroups --cluster-name $cluster_name --region eu-west-1 --query 'nodegroups[0]' --output text 2>/dev/null)
+    
+    if [ -z "$nodegroup_name" ] || [ "$nodegroup_name" = "None" ]; then
+        print_warning "Could not find node group name, skipping auto-scale"
+        return
+    fi
+    
+    # Check current node count
+    local current_nodes=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
+    
+    if [ "$current_nodes" -eq 0 ]; then
+        print_status "No nodes available, scaling up node group: $nodegroup_name"
+        
+        # Scale up to 1 node
+        aws eks update-nodegroup-config \
+            --cluster-name $cluster_name \
+            --nodegroup-name $nodegroup_name \
+            --scaling-config minSize=1,maxSize=1,desiredSize=1 \
+            --region eu-west-1
+        
+        print_status "Waiting for node group scaling to complete..."
+        sleep 60  # Give time for scaling to start
+        
+        # Wait for scaling to complete
+        aws eks wait nodegroup-active \
+            --cluster-name $cluster_name \
+            --nodegroup-name $nodegroup_name \
+            --region eu-west-1
+        
+        print_success "Node group scaled up successfully"
+    else
+        print_success "Nodes are already available ($current_nodes nodes)"
+    fi
 }
 
 # Function to install EBS CSI Driver
@@ -136,6 +191,23 @@ deploy_applications() {
     local environment=$1
     
     print_status "Deploying applications for environment: $environment"
+    
+    # Ensure kubectl is configured
+    print_status "Ensuring kubectl is configured..."
+    aws eks update-kubeconfig --region $(terraform output -raw aws_region) --name $(terraform output -raw cluster_name)
+    
+    # Check and scale up node group if needed
+    print_status "Checking node group status..."
+    scale_up_node_group_if_needed
+    
+    # Wait for EKS cluster to be fully ready
+    print_status "Waiting for EKS cluster to be ready..."
+    kubectl wait --for=condition=ready nodes --all --timeout=300s || print_warning "No nodes ready yet (scaled down)"
+    
+    # Add Helm repositories
+    print_status "Adding Helm repositories..."
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm repo update
     
     # Apply the Kubernetes applications module
     terraform apply -var-file="environments/$environment.tfvars" -target=module.kubernetes_apps
@@ -243,6 +315,15 @@ main() {
     
     case $command in
         "deploy")
+            check_prerequisites
+            bootstrap_backend
+            deploy_infrastructure "$environment"
+            install_ebs_csi_driver
+            deploy_applications "$environment"
+            verify_deployment "$environment"
+            print_success "Complete deployment finished successfully!"
+            ;;
+        "all")
             check_prerequisites
             bootstrap_backend
             deploy_infrastructure "$environment"

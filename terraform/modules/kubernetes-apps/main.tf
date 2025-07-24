@@ -14,12 +14,15 @@ terraform {
   }
 }
 
+
+
 # MinIO Deployment
 resource "helm_release" "minio" {
   count      = var.enable_minio ? 1 : 0
   name       = "minio"
-  repository = "https://charts.bitnami.com/minio"
+  repository = "https://charts.bitnami.com/bitnami"
   chart      = "minio"
+  version    = "12.6.8"  # Specify a stable version
   namespace  = var.namespace
   create_namespace = true
 
@@ -52,7 +55,7 @@ resource "helm_release" "minio" {
     }
   }
 
-  depends_on = [kubernetes_namespace.apps]
+  # No depends_on needed for default namespace
 }
 
 # s3www Application Deployment
@@ -147,16 +150,20 @@ resource "helm_release" "s3www_app" {
   depends_on = [helm_release.minio]
 }
 
-# Kubernetes Namespace
-resource "kubernetes_namespace" "apps" {
-  metadata {
-    name = var.namespace
-    labels = {
-      environment = var.environment
-      managed-by  = "terraform"
-    }
-  }
-}
+# Kubernetes Namespace (only create if not using default namespace)
+# Note: Default namespace already exists, so we skip creation for dev environment
+# Temporarily disabled for dev environment to avoid "already exists" error
+# resource "kubernetes_namespace" "apps" {
+#   count = var.namespace != "default" ? 1 : 0
+#   
+#   metadata {
+#     name = var.namespace
+#     labels = {
+#       environment = var.environment
+#       managed-by  = "terraform"
+#     }
+#   }
+# }
 
 # AWS Secrets Manager Integration (Production)
 resource "aws_secretsmanager_secret" "minio_credentials" {
