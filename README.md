@@ -98,9 +98,9 @@ kubectl wait --for=condition=ready pod -l app=s3www-app --timeout=300s
 ### MinIO Setup
 1. **Access Console**: 
    ```bash
-   kubectl port-forward -n default svc/minio-console 9090:9090 --address 0.0.0.0
+   kubectl port-forward -n default svc/minio 9001:9001 --address 0.0.0.0
    ```
-2. **Login**: `http://localhost:9090` (minioadmin / minioadmin123) <!-- Development credentials - use AWS Secrets Manager in production -->
+2. **Login**: `http://localhost:9001` (minioadmin / minioadmin123) <!-- Development credentials - use AWS Secrets Manager in production -->
 3. **Create Bucket**: `s3www-storage`
 4. **Upload Files**: Add HTML, CSS, images, etc.
 
@@ -164,10 +164,10 @@ kubectl get storageclass
 **Problem**: Broken pipe, timeouts, connection refused
 ```bash
 # Use improved port-forward command
-kubectl port-forward -n default svc/minio-console 9090:9090 --address 0.0.0.0
+kubectl port-forward -n default svc/minio 9001:9001 --address 0.0.0.0
 
 # Alternative: Check if service exists
-kubectl get svc minio-console
+kubectl get svc minio
 
 # Kill existing port-forward processes
 pkill -f "kubectl port-forward"
@@ -308,7 +308,7 @@ ALB_DNS=$(kubectl get svc s3www-app-service -o jsonpath='{.status.loadBalancer.i
 echo "Your ALB endpoint: http://$ALB_DNS"
 curl http://$ALB_DNS
 
-# List files in MinIO bucket
+# List files in MinIO bucket (using MinIO client)
 MINIO_POD=$(kubectl get pods -l app.kubernetes.io/name=minio -o jsonpath='{.items[0].metadata.name}')
 kubectl exec -it $MINIO_POD -- mc ls myminio/s3www-storage
 

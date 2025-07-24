@@ -51,9 +51,9 @@ kubectl get svc s3www-app-service -o jsonpath='{.status.loadBalancer.ingress[0].
 
 ```bash
 # Access MinIO console
-kubectl port-forward -n default svc/minio-console 9090:9090 --address 0.0.0.0
+kubectl port-forward -n default svc/minio 9001:9001 --address 0.0.0.0
 
-# Open browser: http://localhost:9090
+# Open browser: http://localhost:9001
 # Login: minioadmin / minioadmin123
 # Create bucket: s3www-storage
 # Upload your files
@@ -110,10 +110,10 @@ kubectl logs -l app=minio
 
 ```bash
 # s3www application
-kubectl port-forward svc/s3www-app-service 8080:8080
+kubectl port-forward svc/s3www-app-service 8080:80
 
 # MinIO console
-kubectl port-forward svc/minio-console 9090:9090
+kubectl port-forward svc/minio 9001:9001
 
 # MinIO API
 kubectl port-forward svc/minio 9000:9000

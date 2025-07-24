@@ -43,7 +43,7 @@ output "velero_namespace" {
 output "application_endpoints" {
   description = "Application endpoints and access information"
   value = {
-    minio_console = var.enable_minio ? "kubectl port-forward -n ${var.namespace} svc/minio-console 9090:9090" : null
+    minio_console = var.enable_minio ? "kubectl port-forward -n ${var.namespace} svc/minio 9001:9001" : null
     s3www_service = var.enable_s3www ? "kubectl get svc -n ${var.namespace} s3www-app-service" : null
     grafana       = var.enable_monitoring ? "kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80" : null
   }
