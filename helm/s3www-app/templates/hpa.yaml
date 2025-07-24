@@ -1,3 +1,7 @@
+# Horizontal Pod Autoscaler for automatic scaling based on CPU/Memory usage
+# NOTE: Currently not in use - HPA is not enabled in current deployment
+# Enable by setting hpa.enabled = true in values.yaml
+# Useful for production environments with variable traffic patterns
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

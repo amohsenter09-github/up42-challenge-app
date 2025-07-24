@@ -1,3 +1,7 @@
+# Ingress configuration for ALB-based external access
+# NOTE: Currently not in use - using LoadBalancer service type instead
+# Enable by setting ingress.enabled = true in values.yaml
+# Useful for production with SSL/TLS termination and path-based routing
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
