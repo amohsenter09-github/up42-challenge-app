@@ -2,6 +2,17 @@
 
 # UP42 Challenge - Complete Terraform Deployment Script
 # Manages full lifecycle of infrastructure and applications
+#
+# QUICK START:
+# 1. Make script executable: chmod +x deploy.sh
+# 2. Deploy dev environment: ./deploy.sh deploy dev
+# 3. Deploy production: ./deploy.sh deploy production
+# 4. Check status: ./deploy.sh verify dev
+# 5. Clean up: ./deploy.sh destroy
+#
+# TROUBLESHOOTING:
+# - If S3 permission errors: Check AWS credentials with 'aws configure'
+# - If backend issues: Verify S3 bucket exists and has proper permissions
 
 set -e
 
