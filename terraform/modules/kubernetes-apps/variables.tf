@@ -1,30 +1,5 @@
-# Minimal variables for UP42 Challenge AWS Infrastructure
+# Variables for Kubernetes Applications Module
 
-variable "aws_region" {
-  description = "AWS region to deploy resources"
-  type        = string
-  default     = "eu-west-1"  # Ireland region
-}
-
-variable "cluster_name" {
-  description = "Name of the EKS cluster"
-  type        = string
-  default     = "up42-challenge"
-}
-
-variable "cluster_version" {
-  description = "Kubernetes version for the EKS cluster"
-  type        = string
-  default     = "1.28"
-}
-
-variable "vpc_cidr" {
-  description = "CIDR block for VPC"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-# Environment Configuration
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
@@ -37,7 +12,17 @@ variable "namespace" {
   default     = "default"
 }
 
-# Application Configuration
+variable "cluster_name" {
+  description = "EKS cluster name"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+}
+
+# MinIO Configuration
 variable "enable_minio" {
   description = "Enable MinIO deployment"
   type        = bool
@@ -70,6 +55,7 @@ variable "storage_class" {
   default     = "ebs-sc"
 }
 
+# s3www Configuration
 variable "enable_s3www" {
   description = "Enable s3www application deployment"
   type        = bool

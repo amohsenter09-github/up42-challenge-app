@@ -2,6 +2,15 @@
 
 A production-ready Kubernetes deployment solution for the [s3www application](https://github.com/harshavardhana/s3www) with [MinIO](https://min.io/) dependency, deployed on AWS EKS using Helm charts and Terraform.
 
+## 📚 Documentation
+
+- **[🚀 Quick Start](QUICKSTART.md)** - Get up and running in 10 minutes
+- **[🏗️ Architecture](ARCHITECTURE.md)** - Detailed system architecture
+- **[🔧 Deployment Guide](terraform/DEPLOYMENT.md)** - Terraform infrastructure deployment
+- **[📦 Helm Chart](helm/s3www-app/CHART.md)** - Application deployment details
+- **[🎯 Design Decisions](DESIGN.md)** - Implementation rationale and trade-offs
+- **[🤝 Contributing](CONTRIBUTING.md)** - How to contribute to the project
+
 ## 🎯 Challenge Overview
 Deploy a lightweight Go web server (`s3www`) that serves static files from S3-compatible storage (`MinIO`) with external access via AWS Application Load Balancer.
 
@@ -94,6 +103,24 @@ kubectl wait --for=condition=ready pod -l app=s3www-app --timeout=300s
 2. **Login**: `http://localhost:9090` (minioadmin / minioadmin123) <!-- Development credentials - use AWS Secrets Manager in production -->
 3. **Create Bucket**: `s3www-storage`
 4. **Upload Files**: Add HTML, CSS, images, etc.
+
+### Automatic File Upload (Optional)
+The init job automatically runs on deployment and can fetch and upload files:
+
+```bash
+# Edit environment configuration
+nano terraform/environments/dev.tfvars
+
+# Enable init job and set file URL
+enable_init_job = true
+init_file_url = "https://example.com/sample-file.html"
+init_file_name = "index.html"
+
+# Redeploy applications
+./deploy.sh applications dev
+```
+
+**Note**: The init job will always run but will skip file download/upload if no `fileUrl` is provided.
 
 ### s3www Application Configuration
 - **Bucket**: `s3www-storage`
@@ -341,6 +368,7 @@ up42-challenge-app/
 - ✅ External access via ALB DNS name
 - ✅ Application serving files from MinIO storage
 - ✅ ALB endpoint accessible: `http://ae9b1f154a01942d791c8e3ecce02e89-1376937510.eu-west-1.elb.amazonaws.com/`
+- ✅ Init job mechanism for automatic file fetching (optional)
 
 ## 🔄 Maintenance & Updates
 ```bash

@@ -73,4 +73,14 @@ config:
   
   # Application settings
   port: 8080
-  debug: false 
+  debug: false
+
+# Initialization job configuration
+init:
+  enabled: false  # Disabled by default
+  image:
+    repository: alpine
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  fileUrl: ""  # URL to fetch the file to serve
+  fileName: "index.html"  # Name of the file to save 
